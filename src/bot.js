@@ -363,6 +363,7 @@ async function startBot() {
     }
 
     try {
+      await sock.sendPresenceUpdate('composing', jid);
       await sock.sendMessage(jid, { text: 'Downloading, please wait.' }, { quoted: msg });
 
       const data = await fetchMediaInfo(url);
@@ -382,6 +383,7 @@ async function startBot() {
         `Duration: ${data.duration || 'N/A'}`,
       ].join('\n').trim();
 
+      await sock.sendPresenceUpdate('paused', jid);
       await sock.sendMessage(
         jid,
         {
@@ -396,6 +398,7 @@ async function startBot() {
       addLog({ platform, status: 'Success', user: jid });
       console.log(c(`  Sent: ${platform} to ${jid}`, 'green'));
     } catch (err) {
+      await sock.sendPresenceUpdate('paused', jid).catch(() => {});
       addLog({ platform, status: 'Failed', user: jid });
       console.log(c(`  Error (${platform}): ${err.message || err}`, 'red'));
       await sock.sendMessage(
