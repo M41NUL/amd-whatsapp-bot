@@ -49,7 +49,6 @@ let downloadCount = 0;
 let currentSock = null;
 let menuActive = false;
 let reconnecting = false;
-let hasConnectedBefore = false;
 
 function detectPlatform(url) {
   if (/tiktok\.com/i.test(url)) return 'tiktok';
@@ -223,6 +222,7 @@ async function startBot() {
 
   currentSock = sock;
   reconnecting = false;
+  let connectedThisSession = false;
 
   sock.ev.on('creds.update', saveCreds);
 
@@ -235,6 +235,8 @@ async function startBot() {
     }
 
     if (connection === 'open') {
+      if (connectedThisSession) return;
+      connectedThisSession = true;
       await spinner('Establishing secure connection', 600);
       clearScreen();
       console.log('');
@@ -246,7 +248,6 @@ async function startBot() {
         ],
         'green'
       );
-      hasConnectedBefore = true;
       enableWakeLock();
       runMenuLoop();
     } else if (connection === 'close') {

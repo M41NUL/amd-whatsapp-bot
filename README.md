@@ -49,6 +49,7 @@ cd ~
 git clone https://github.com/M41NUL/amd-whatsapp-bot.git
 cd amd-whatsapp-bot
 npm install
+npm install-scripts approve @whiskeysockets/baileys protobufjs
 npm start
 ```
 
@@ -94,7 +95,10 @@ If you have the project as a downloaded zip instead of cloning, extract it into 
 
 ```bash
 npm install
+npm install-scripts approve @whiskeysockets/baileys protobufjs
 ```
+
+The second command silences a one-time npm warning about install scripts. It only needs to run once.
 
 ### Step 6: Run the bot
 
@@ -147,6 +151,7 @@ Once connected, send any TikTok, Instagram, or Facebook video link to the bot on
 |---|---|
 | `npm start` | Start the bot |
 | `npm install` | Install all dependencies |
+| `npm install-scripts approve @whiskeysockets/baileys protobufjs` | Silence the install-scripts warning (one-time) |
 | `rm -rf session` | Clear saved login session |
 | `cd ~ && rm -rf amd-whatsapp-bot` | Delete the entire project folder |
 | `git clone https://github.com/M41NUL/amd-whatsapp-bot.git` | Clone the repository |
@@ -188,17 +193,29 @@ Type the option number and press Enter. The menu reappears after each action, ex
 
 ## Run in Background (Termux)
 
-The bot automatically enables `termux-wake-lock` as soon as it connects to WhatsApp, so the phone screen can turn off without disconnecting the session. This requires the Termux:API app to be installed; if it is missing, the bot still runs normally, just without the wake lock.
+Minimizing the Termux app or switching to WhatsApp does not stop the bot by default, but Android can still kill the Termux process in the background to save battery. `termux-wake-lock` alone does not fully prevent this. Follow both steps below for a reliable background run.
 
-The wake lock is released automatically when you disconnect from the control menu (option `0`).
+### Step 1: Disable battery optimization for Termux
 
-To keep the bot running even after closing the Termux session, start it detached from the terminal:
+Android battery optimization is the most common reason the bot stops when the app is minimized.
+
+1. Open phone **Settings > Apps > Termux**
+2. Open **Battery**
+3. Select **Unrestricted** or **No restrictions** (wording varies by phone brand)
+
+On some phones (Xiaomi, Oppo, Vivo, Realme, Samsung) there is an additional **Autostart** or **Allow background activity** toggle under the same app settings. Enable that as well.
+
+### Step 2: Keep the wake lock active
+
+The bot automatically runs `termux-wake-lock` as soon as it connects to WhatsApp, which prevents the CPU from sleeping while the screen is off. This requires the Termux:API app. The wake lock releases automatically on disconnect (option `0` in the control menu).
+
+### Step 3: Run detached from the terminal
 
 ```bash
 nohup npm start > amd.log 2>&1 &
 ```
 
-Note: the login menu and control menu need direct terminal input, so complete the first-time login normally before switching to detached mode.
+This keeps the bot running even if the Termux session is closed. Complete the first-time login normally before switching to detached mode, since the login menu needs direct terminal input.
 
 ### View live logs
 
