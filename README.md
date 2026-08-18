@@ -34,6 +34,25 @@ AMD is a WhatsApp bot that automatically detects video links from TikTok, Instag
 
 ---
 
+## Quick Start (Termux)
+
+Copy and run all commands below in order.
+
+```bash
+pkg update && pkg upgrade -y
+pkg install nodejs git -y
+termux-setup-storage
+cd ~
+git clone https://github.com/M41NUL/amd-whatsapp-bot.git
+cd amd-whatsapp-bot
+npm install
+npm start
+```
+
+After `npm start`, the banner and menu will appear, then a login method prompt. Choose `1` for Pairing Code or `2` for QR Code and follow the on-screen instructions. See the full guide below for details.
+
+---
+
 ## Termux Setup Guide
 
 ### Step 1: Update Termux packages
@@ -56,36 +75,31 @@ termux-setup-storage
 
 Allow the permission when prompted.
 
-### Step 4: Create a project folder inside Termux home
+### Step 4: Clone the repository inside Termux home
 
 Do not run this from `/storage/emulated/0/...`. Always use the Termux home directory.
 
 ```bash
-mkdir -p ~/amd-bot
-cd ~/amd-bot
+cd ~
+git clone https://github.com/M41NUL/amd-whatsapp-bot.git
+cd amd-whatsapp-bot
 ```
 
-### Step 5: Copy the bot files into this folder
+If you have the project as a downloaded zip instead of cloning, extract it into `~/amd-whatsapp-bot` and keep the `src/` folder structure intact.
 
-Move `bot.js`, `devinfo.js`, and `package.json` into `~/amd-bot`. If the files are in your phone's Download folder:
-
-```bash
-cp ~/storage/downloads/bot.js ~/storage/downloads/devinfo.js ~/storage/downloads/package.json ~/amd-bot/
-```
-
-### Step 6: Install dependencies
+### Step 5: Install dependencies
 
 ```bash
 npm install
 ```
 
-### Step 7: Run the bot
+### Step 6: Run the bot
 
 ```bash
-node bot.js
+npm start
 ```
 
-### Step 8: Choose a login method
+### Step 7: Choose a login method
 
 On first run, the banner and menu will appear, followed by a login method prompt:
 
@@ -98,7 +112,7 @@ On first run, the banner and menu will appear, followed by a login method prompt
 
 **QR Code**: A QR code will be shown directly in the terminal. Scan it in WhatsApp under Linked Devices.
 
-### Step 9: Session persistence
+### Step 8: Session persistence
 
 After a successful login, session data is saved in the `session/` folder. Future runs will connect automatically without asking for a login method again.
 
@@ -106,7 +120,7 @@ To log in again from scratch, delete the `session/` folder and restart the bot.
 
 ```bash
 rm -rf session
-node bot.js
+npm start
 ```
 
 ---
@@ -119,20 +133,23 @@ Once connected, send any TikTok, Instagram, or Facebook video link to the bot on
 
 | Command | Description |
 |---|---|
-| `node bot.js` | Start the bot |
+| `npm start` | Start the bot |
 | `npm install` | Install all dependencies |
 | `rm -rf session` | Clear saved login session |
+| `git clone https://github.com/M41NUL/amd-whatsapp-bot.git` | Clone the repository |
 | `pkg install nodejs git -y` | Install Node.js and git in Termux |
 | `termux-setup-storage` | Grant Termux access to phone storage |
 
 ## Project Structure
 
 ```
-amd-bot/
-├── bot.js         Main bot logic and message handling
-├── devinfo.js     Banner, menu, and developer information
-├── package.json   Dependencies and project metadata
-└── session/       Auth session data, created after first login
+amd-whatsapp-bot/
+├── src/
+│   ├── bot.js         Main bot logic and message handling
+│   └── devinfo.js     Banner, menu, and developer information
+├── package.json       Dependencies and project metadata
+├── README.md          Documentation
+└── session/           Auth session data, created after first login
 ```
 
 ---
@@ -249,20 +266,18 @@ This streams the video file directly as `video/mp4` binary data, not JSON.
 
 ## Contact Information
 
-| | |
-|---|---|
-| **Author** | Md. Mainul Islam |
-| **Owner** | CODEX-M41NUL |
-| **GitHub** | [M41NUL](https://github.com/M41NUL) |
-| **Repository** | [amd-whatsapp-bot](https://github.com/M41NUL/amd-whatsapp-bot) |
-| **WhatsApp** | [+8801308850528](https://wa.me/8801308850528) |
-| **Telegram** | [t.me/mdmainulislaminfo](https://t.me/mdmainulislaminfo) |
-| **Telegram Channel** | [t.me/codexm41nul](https://t.me/codexm41nul) |
-| **Telegram Group** | [t.me/codex_m41nul](https://t.me/codex_m41nul) |
-| **Email** | [devmainulislam@gmail.com](mailto:devmainulislam@gmail.com) |
-| **YouTube** | [@codexm41nul](https://youtube.com/@codexm41nul) |
-
 <div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-M41NUL-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/M41NUL)
+[![Repository](https://img.shields.io/badge/Repo-amd--whatsapp--bot-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/M41NUL/amd-whatsapp-bot)
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-Contact-25D366?style=flat-square&logo=whatsapp&logoColor=white)](https://wa.me/8801308850528)
+[![Telegram](https://img.shields.io/badge/Telegram-Profile-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/mdmainulislaminfo)
+[![Telegram Channel](https://img.shields.io/badge/Telegram-Channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/codexm41nul)
+[![Telegram Group](https://img.shields.io/badge/Telegram-Group-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/codex_m41nul)
+[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat-square&logo=gmail&logoColor=white)](mailto:devmainulislam@gmail.com)
+[![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://youtube.com/@codexm41nul)
+
+Md. Mainul Islam &nbsp;|&nbsp; CODEX-M41NUL
 
 Copyright 2026 CODEX-M41NUL. All Rights Reserved.
 
