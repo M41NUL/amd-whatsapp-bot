@@ -10,13 +10,6 @@ WhatsApp bot for downloading TikTok, Instagram, and Facebook videos.
 [![Runtime](https://img.shields.io/badge/Runtime-Node.js-black?style=for-the-badge&logo=node.js&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-MIT-black?style=for-the-badge)](#)
 
-[![GitHub](https://img.shields.io/badge/GitHub-M41NUL-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/M41NUL)
-[![Telegram Channel](https://img.shields.io/badge/Telegram-Channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/codexm41nul)
-[![Telegram Group](https://img.shields.io/badge/Telegram-Group-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/codex_m41nul)
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-Contact-25D366?style=flat-square&logo=whatsapp&logoColor=white)](https://wa.me/8801308850528)
-[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat-square&logo=gmail&logoColor=white)](mailto:devmainulislam@gmail.com)
-[![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://youtube.com/@codexm41nul)
-
 </div>
 
 ---
@@ -120,7 +113,17 @@ node bot.js
 
 ## Usage
 
-Once connected, send any TikTok, Instagram, or Facebook video link to the bot on WhatsApp. The bot will detect the platform, fetch the video through the API, and reply with the video file and caption.
+Once connected, send any TikTok, Instagram, or Facebook video link to the bot on WhatsApp. The bot detects the platform, fetches the video through the API, and replies with the video file and caption.
+
+## Command List
+
+| Command | Description |
+|---|---|
+| `node bot.js` | Start the bot |
+| `npm install` | Install all dependencies |
+| `rm -rf session` | Clear saved login session |
+| `pkg install nodejs git -y` | Install Node.js and git in Termux |
+| `termux-setup-storage` | Grant Termux access to phone storage |
 
 ## Project Structure
 
@@ -132,37 +135,134 @@ amd-bot/
 └── session/       Auth session data, created after first login
 ```
 
+---
+
 ## API Reference
 
 This bot uses the CODEX-M41NUL All Media Downloader API.
 
-Base URL: `https://all-media-downloader-api.onrender.com`
+**Base URL**
+```
+https://all-media-downloader-api.onrender.com
+```
 
-| Endpoint | Description |
-|---|---|
-| `/api/download` | Auto-detects platform from URL |
-| `/api/tiktok` | TikTok links only |
-| `/api/instagram` | Instagram links only |
-| `/api/facebook` | Facebook links only |
-| `/api/proxy-video` | Streams TikTok video bytes using a proxy token |
+**Authentication**
+
+Every request requires an `x-api-key` header.
+
+```
+x-api-key: m41nul
+```
+
+### 1. Auto Detect Download
+
+Detects the platform automatically from the given URL.
+
+```
+GET /api/download?url=<video_link>
+```
+
+### 2. TikTok Download
+
+```
+GET /api/tiktok?url=<video_link>
+```
+
+### 3. Instagram Download
+
+```
+GET /api/instagram?url=<video_link>
+```
+
+### 4. Facebook Download
+
+```
+GET /api/facebook?url=<video_link>
+```
+
+### 5. Proxy Video (TikTok only)
+
+TikTok's CDN blocks direct fetches of `video_url` from anywhere other than this API server. Use this endpoint right after calling `/api/tiktok` or `/api/download` for a TikTok link, using the `proxy_token` from that response. The token is single-use and expires shortly after resolving.
+
+```
+GET /api/proxy-video?proxy_token=<token>
+```
+
+This streams the video file directly as `video/mp4` binary data, not JSON.
 
 ---
 
-<div align="center">
+### Response Format — Facebook / Instagram
 
-## Developer Information
+```json
+{
+  "success": true,
+  "caption": "full caption text",
+  "platform": "facebook",
+  "format": "mp4",
+  "size": "12.30 MB",
+  "duration": "00:45",
+  "video_url": "https://direct-video-link",
+  "thumbnail_url": "https://thumbnail-link",
+  "quality": "best",
+  "proxy_token": null
+}
+```
+
+`video_url` can be fetched directly for these two platforms.
+
+### Response Format — TikTok
+
+```json
+{
+  "success": true,
+  "caption": "full caption text",
+  "platform": "tiktok",
+  "format": "mp4",
+  "size": "1.62 MB",
+  "duration": "00:15",
+  "video_url": "https://v19-webapp-prime.us.tiktok.com/... (informational only)",
+  "thumbnail_url": "https://thumbnail-link",
+  "quality": "best",
+  "proxy_token": "e262ea1e389042c7bd58e561381c2e09"
+}
+```
+
+`video_url` is informational only for TikTok. Use `proxy_token` with `/api/proxy-video` to get the actual video bytes.
+
+### Field Reference
+
+| Field | Type | Description |
+|---|---|---|
+| `success` | boolean | Whether the request was resolved successfully |
+| `caption` | string | Original post caption or description |
+| `platform` | string | Detected platform: `tiktok`, `instagram`, or `facebook` |
+| `format` | string | File format of the media, typically `mp4` |
+| `size` | string | Approximate file size |
+| `duration` | string | Video duration in `mm:ss` |
+| `video_url` | string | Direct video link (informational only for TikTok) |
+| `thumbnail_url` | string | Thumbnail image link |
+| `quality` | string | Resolved video quality |
+| `proxy_token` | string or null | Required for TikTok video byte retrieval, null for other platforms |
+
+---
+
+## Contact Information
 
 | | |
 |---|---|
 | **Author** | Md. Mainul Islam |
 | **Owner** | CODEX-M41NUL |
 | **GitHub** | [M41NUL](https://github.com/M41NUL) |
+| **Repository** | [amd-whatsapp-bot](https://github.com/M41NUL/amd-whatsapp-bot) |
 | **WhatsApp** | [+8801308850528](https://wa.me/8801308850528) |
 | **Telegram** | [t.me/mdmainulislaminfo](https://t.me/mdmainulislaminfo) |
 | **Telegram Channel** | [t.me/codexm41nul](https://t.me/codexm41nul) |
 | **Telegram Group** | [t.me/codex_m41nul](https://t.me/codex_m41nul) |
 | **Email** | [devmainulislam@gmail.com](mailto:devmainulislam@gmail.com) |
 | **YouTube** | [@codexm41nul](https://youtube.com/@codexm41nul) |
+
+<div align="center">
 
 Copyright 2026 CODEX-M41NUL. All Rights Reserved.
 

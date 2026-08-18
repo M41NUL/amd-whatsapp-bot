@@ -39,11 +39,7 @@ export function printDevInfo() {
   console.log(`  Owner       : ${OWNER}`);
   console.log(`  GitHub      : ${GITHUB} (${GITHUB_URL})`);
   console.log(`  WhatsApp    : ${WHATSAPP}`);
-  console.log(`  Telegram    : ${TELEGRAM}`);
-  console.log(`  Channel     : ${TELEGRAM_CHANNEL}`);
-  console.log(`  Group       : ${TELEGRAM_GROUP}`);
   console.log(`  Email       : ${EMAIL}`);
-  console.log(`  YouTube     : ${YOUTUBE}`);
   console.log("  --------------------------------------------");
   console.log(`  ${COPYRIGHT}`);
   console.log("  --------------------------------------------");

@@ -132,6 +132,7 @@ async function startBot() {
   });
 
   if (isFreshLogin && loginMethod === "pairing" && !sock.authState.creds.registered) {
+    console.log('\x1b[2m  Example: 8801XXXXXXXXX\x1b[0m');
     let phoneNumber = await ask('Enter WhatsApp number with country code, no plus sign: ');
     phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
