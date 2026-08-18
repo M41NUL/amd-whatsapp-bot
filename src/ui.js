@@ -23,29 +23,61 @@ export function dim(text) {
   return `${colors.dim}${text}${colors.reset}`;
 }
 
-export function line(char = '-', length = 46, color = 'cyan') {
-  console.log(c(char.repeat(length), color));
-}
-
-export function title(text, color = 'cyan') {
-  console.log('');
-  console.log(c(`  ${text}`, color) + bold(''));
-  line('-', 46, color);
-}
-
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function typeEffect(text, delayMs = 12, color = 'green') {
-  for (const ch of text) {
-    process.stdout.write(c(ch, color));
-    await sleep(delayMs);
-  }
-  process.stdout.write('\n');
+export function clearScreen() {
+  process.stdout.write('\x1b[2J\x1b[0f');
 }
 
-export async function spinner(label, durationMs = 900) {
+const BOX = {
+  tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│',
+};
+
+const termWidth = () => Math.min(process.stdout.columns || 60, 60);
+
+function stripAnsi(str) {
+  return str.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+export function box(lines, color = 'cyan', width = null) {
+  const w = width || termWidth();
+  const innerWidth = w - 2;
+  const out = [];
+
+  out.push(c(BOX.tl + BOX.h.repeat(innerWidth) + BOX.tr, color));
+
+  for (const raw of lines) {
+    if (raw === null) {
+      out.push(c(BOX.v, color) + ' '.repeat(innerWidth) + c(BOX.v, color));
+      continue;
+    }
+    if (raw === '__DIVIDER__') {
+      out.push(c(BOX.v, color) + c(BOX.h.repeat(innerWidth), color) + c(BOX.v, color));
+      continue;
+    }
+    const visibleLen = stripAnsi(raw).length;
+    const padding = Math.max(innerWidth - visibleLen - 1, 0);
+    out.push(c(BOX.v, color) + ' ' + raw + ' '.repeat(padding) + c(BOX.v, color));
+  }
+
+  out.push(c(BOX.bl + BOX.h.repeat(innerWidth) + BOX.br, color));
+  return out.join('\n');
+}
+
+export function printBox(lines, color = 'cyan', width = null) {
+  console.log(box(lines, color, width));
+}
+
+export async function typeLines(lines, delayMs = 40) {
+  for (const l of lines) {
+    console.log(l);
+    await sleep(delayMs);
+  }
+}
+
+export async function spinner(label, durationMs = 700) {
   const frames = ['|', '/', '-', '\\'];
   const start = Date.now();
   let i = 0;
@@ -56,10 +88,6 @@ export async function spinner(label, durationMs = 900) {
     await sleep(80);
   }
   process.stdout.write(`\r  ${c('OK', 'green')} ${label}\n`);
-}
-
-export function clearScreen() {
-  process.stdout.write('\x1b[2J\x1b[0f');
 }
 
 export { colors };

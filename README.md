@@ -45,8 +45,7 @@ Copy and run all commands below in order.
 pkg update && pkg upgrade -y
 pkg install nodejs git -y
 termux-setup-storage
-cd -
-cd ~ && rm -rf amd-whatsapp-bot
+cd ~
 git clone https://github.com/M41NUL/amd-whatsapp-bot.git
 cd amd-whatsapp-bot
 npm install

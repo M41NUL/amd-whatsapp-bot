@@ -6,7 +6,7 @@ import readline from 'readline';
 import { exec } from 'child_process';
 import qrcode from 'qrcode-terminal';
 import { printBanner, printDevInfo, printSupportedPlatforms } from './devinfo.js';
-import { c, bold, dim, line, spinner, clearScreen } from './ui.js';
+import { c, bold, dim, clearScreen, spinner, box, printBox } from './ui.js';
 import { addLog, getLogs, clearLogs } from './logger.js';
 
 const API_BASE = 'https://all-media-downloader-api.onrender.com';
@@ -27,12 +27,20 @@ function ask(question) {
   return new Promise((resolve) => rl.question(question, resolve));
 }
 
+let wakeLockEnabled = false;
 function enableWakeLock() {
+  if (wakeLockEnabled) return;
   exec('termux-wake-lock', (err) => {
     if (!err) {
-      console.log(c('  Termux wake lock enabled. Bot will keep running in the background.', 'green'));
+      wakeLockEnabled = true;
     }
   });
+}
+
+function disableWakeLock() {
+  if (!wakeLockEnabled) return;
+  exec('termux-wake-unlock', () => {});
+  wakeLockEnabled = false;
 }
 
 const seenUsers = new Set();
@@ -40,6 +48,8 @@ const seenUsers = new Set();
 let downloadCount = 0;
 let currentSock = null;
 let menuActive = false;
+let reconnecting = false;
+let hasConnectedBefore = false;
 
 function detectPlatform(url) {
   if (/tiktok\.com/i.test(url)) return 'tiktok';
@@ -94,51 +104,60 @@ async function fetchDirectVideo(videoUrl) {
 
 async function selectLoginMethod() {
   console.log('');
-  console.log(c('  Login Method', 'yellow'));
-  line('-', 46, 'yellow');
-  console.log('  1. Pairing Code');
-  console.log('  2. QR Code');
-  line('-', 46, 'yellow');
-  const choice = await ask(c('  Select an option (1 or 2): ', 'green'));
+  printBox(
+    [
+      bold(c('Login Method', 'yellow')),
+      '__DIVIDER__',
+      c('1.', 'yellow') + ' Pairing Code',
+      c('2.', 'yellow') + ' QR Code',
+    ],
+    'yellow'
+  );
+  const choice = await ask('\n' + c('  Select an option (1 or 2): ', 'green'));
   return choice.trim() === '2' ? 'qr' : 'pairing';
 }
 
-function printMainMenu() {
-  console.log('');
-  line('=', 46, 'cyan');
-  console.log(bold(c('  AMD Control Menu', 'cyan')));
-  line('=', 46, 'cyan');
-  console.log('  1. View Bot Status');
-  console.log('  2. View Download Logs');
-  console.log('  3. Clear Download Logs');
-  console.log('  4. Reconnect Bot');
-  console.log('  0. Disconnect and Exit');
-  line('-', 46, 'cyan');
+function renderMainMenu() {
+  return box(
+    [
+      bold(c('AMD Control Menu', 'cyan')),
+      '__DIVIDER__',
+      c('1.', 'cyan') + ' View Bot Status',
+      c('2.', 'cyan') + ' View Download Logs',
+      c('3.', 'cyan') + ' Clear Download Logs',
+      c('4.', 'cyan') + ' Reconnect Bot',
+      c('0.', 'cyan') + ' Disconnect and Exit',
+    ],
+    'cyan'
+  );
 }
 
 function printStatus() {
   console.log('');
-  console.log(c('  Bot Status', 'green'));
-  line('-', 46, 'green');
-  console.log(`  Connection   : ${c('Online', 'green')}`);
-  console.log(`  Account      : ${currentSock?.user?.id || 'Unknown'}`);
-  console.log(`  Downloads    : ${downloadCount}`);
-  line('-', 46, 'green');
+  printBox(
+    [
+      bold(c('Bot Status', 'green')),
+      '__DIVIDER__',
+      `${dim('Connection')}  ${c('Online', 'green')}`,
+      `${dim('Account')}     ${currentSock?.user?.id || 'Unknown'}`,
+      `${dim('Downloads')}   ${downloadCount}`,
+    ],
+    'green'
+  );
 }
 
 function printLogs() {
   const logs = getLogs();
   console.log('');
-  console.log(c('  Download Logs', 'blue'));
-  line('-', 46, 'blue');
   if (logs.length === 0) {
-    console.log(dim('  No downloads yet.'));
-  } else {
-    logs.forEach((entry, i) => {
-      console.log(`  ${i + 1}. [${entry.time}] ${entry.platform} - ${entry.status} - ${entry.user}`);
-    });
+    printBox([bold(c('Download Logs', 'blue')), '__DIVIDER__', dim('No downloads yet.')], 'blue');
+    return;
   }
-  line('-', 46, 'blue');
+  const lines = [bold(c('Download Logs', 'blue')), '__DIVIDER__'];
+  logs.slice(0, 15).forEach((entry, i) => {
+    lines.push(`${i + 1}. [${entry.time}] ${entry.platform} - ${entry.status}`);
+  });
+  printBox(lines, 'blue');
 }
 
 async function runMenuLoop() {
@@ -146,8 +165,9 @@ async function runMenuLoop() {
   menuActive = true;
 
   while (true) {
-    printMainMenu();
-    const choice = (await ask(c('  Select an option: ', 'green'))).trim();
+    console.log('');
+    console.log(renderMainMenu());
+    const choice = (await ask('\n' + c('  Select an option: ', 'green'))).trim();
 
     if (choice === '1') {
       printStatus();
@@ -172,7 +192,7 @@ async function runMenuLoop() {
           await currentSock.logout();
         } catch (e) {}
       }
-      exec('termux-wake-unlock', () => {});
+      disableWakeLock();
       console.log(c('  Bot disconnected. Goodbye.', 'red'));
       process.exit(0);
     } else {
@@ -190,6 +210,7 @@ async function startBot() {
     printSupportedPlatforms();
     printDevInfo();
     loginMethod = await selectLoginMethod();
+    clearScreen();
   }
 
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
@@ -201,6 +222,7 @@ async function startBot() {
   });
 
   currentSock = sock;
+  reconnecting = false;
 
   sock.ev.on('creds.update', saveCreds);
 
@@ -213,12 +235,18 @@ async function startBot() {
     }
 
     if (connection === 'open') {
-      await spinner('Establishing secure connection', 700);
+      await spinner('Establishing secure connection', 600);
+      clearScreen();
       console.log('');
-      line('=', 46, 'green');
-      console.log(bold(c('  Connected Successfully', 'green')));
-      console.log(`  Account : ${c(sock.user?.id || 'Unknown', 'white')}`);
-      line('=', 46, 'green');
+      printBox(
+        [
+          bold(c('Connected Successfully', 'green')),
+          '__DIVIDER__',
+          `Account  ${sock.user?.id || 'Unknown'}`,
+        ],
+        'green'
+      );
+      hasConnectedBefore = true;
       enableWakeLock();
       runMenuLoop();
     } else if (connection === 'close') {
@@ -226,20 +254,25 @@ async function startBot() {
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
       if (shouldReconnect) {
-        console.log('');
-        console.log(c('  Connection lost. Reconnecting...', 'yellow'));
-        startBot();
+        if (!reconnecting) {
+          reconnecting = true;
+          menuActive = false;
+          console.log('');
+          console.log(c('  Connection lost. Reconnecting...', 'yellow'));
+          startBot();
+        }
       } else {
         console.log('');
         console.log(c('  Session ended. Delete the session folder to log in again.', 'red'));
+        disableWakeLock();
         process.exit(0);
       }
     }
   });
 
   if (isFreshLogin && loginMethod === 'pairing' && !sock.authState.creds.registered) {
-    console.log(dim('  Example: 8801XXXXXXXXX'));
-    let phoneNumber = await ask(c('  Enter WhatsApp number with country code, no plus sign: ', 'green'));
+    printBox([bold(c('Pairing Code Login', 'cyan')), '__DIVIDER__', dim('Example: 8801XXXXXXXXX')], 'cyan');
+    let phoneNumber = await ask('\n' + c('  Enter WhatsApp number: ', 'green'));
     phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
     if (phoneNumber.length < 8) {
@@ -250,9 +283,19 @@ async function startBot() {
 
     try {
       const code = await sock.requestPairingCode(phoneNumber);
+      clearScreen();
       console.log('');
-      console.log(c(`  Pairing Code: ${bold(code)}`, 'cyan'));
-      console.log(dim('  Enter this code in WhatsApp > Linked Devices > Link with phone number.'));
+      printBox(
+        [
+          bold(c('Pairing Code', 'cyan')),
+          '__DIVIDER__',
+          bold(c(code, 'white')),
+          '',
+          dim('Enter this code in WhatsApp:'),
+          dim('Linked Devices > Link with phone number'),
+        ],
+        'cyan'
+      );
     } catch (err) {
       console.log(c('  Failed to get pairing code:', 'red'), err.message || err);
       rl.close();
