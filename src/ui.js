@@ -28,7 +28,7 @@ export function sleep(ms) {
 }
 
 export function clearScreen() {
-  process.stdout.write('\x1b[2J\x1b[0f');
+  process.stdout.write('\x1b[2J\x1b[3J\x1b[H\x1bc');
 }
 
 const BOX = {
