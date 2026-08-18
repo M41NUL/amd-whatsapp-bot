@@ -24,13 +24,16 @@ AMD is a WhatsApp bot that automatically detects video links from TikTok, Instag
 - TikTok, Instagram, and Facebook support
 - Pairing code or QR code login, selectable at first run
 - Session persistence, no repeated login after first connect
-- Startup banner with tool name, supported platforms, and developer information
+- Animated startup banner with tool name, supported platforms, and developer information
+- Welcome reply on a user's first message, video link handling from every message after
+- In-terminal control menu after connect: status, download logs, reconnect, disconnect
 
 ## Requirements
 
 - Node.js 18 or higher
 - npm
 - Termux (for Android) or any Linux/macOS/Windows environment
+- Termux:API app, only needed for running the bot in the background
 
 ---
 
@@ -129,6 +132,15 @@ npm start
 
 Once connected, send any TikTok, Instagram, or Facebook video link to the bot on WhatsApp. The bot detects the platform, fetches the video through the API, and replies with the video file and caption.
 
+### Message Behavior
+
+| User sends | Bot response |
+|---|---|
+| Any message, first time ever | Welcome message with instructions |
+| A supported video link (TikTok, Instagram, Facebook) | Downloads and sends the video with caption |
+| An unsupported or invalid link | "This link is not supported" message |
+| Any other text, after the first message | "Please send a video link only" message |
+
 ## Command List
 
 | Command | Description |
@@ -136,9 +148,13 @@ Once connected, send any TikTok, Instagram, or Facebook video link to the bot on
 | `npm start` | Start the bot |
 | `npm install` | Install all dependencies |
 | `rm -rf session` | Clear saved login session |
+| `cd ~ && rm -rf amd-whatsapp-bot` | Delete the entire project folder |
 | `git clone https://github.com/M41NUL/amd-whatsapp-bot.git` | Clone the repository |
 | `pkg install nodejs git -y` | Install Node.js and git in Termux |
 | `termux-setup-storage` | Grant Termux access to phone storage |
+| `nohup npm start > amd.log 2>&1 &` | Run the bot detached from the terminal |
+| `tail -f amd.log` | View live background logs |
+| `pkill -f "node src/bot.js"` | Stop the background bot |
 
 ## Project Structure
 
@@ -146,10 +162,56 @@ Once connected, send any TikTok, Instagram, or Facebook video link to the bot on
 amd-whatsapp-bot/
 ├── src/
 │   ├── bot.js         Main bot logic and message handling
-│   └── devinfo.js     Banner, menu, and developer information
+│   ├── devinfo.js     Banner, menu, and developer information
+│   ├── ui.js          Terminal colors, animation, and layout helpers
+│   └── logger.js      In-memory download log tracker
 ├── package.json       Dependencies and project metadata
 ├── README.md          Documentation
 └── session/           Auth session data, created after first login
+```
+
+## Control Menu
+
+Once connected, an in-terminal control menu becomes available.
+
+| Option | Action |
+|---|---|
+| `1` | View bot status |
+| `2` | View download logs |
+| `3` | Clear download logs |
+| `4` | Reconnect the bot |
+| `0` | Disconnect and exit |
+
+Type the option number and press Enter. The menu reappears after each action, except reconnect and disconnect.
+
+---
+
+## Run in Background (Termux)
+
+The bot automatically enables `termux-wake-lock` as soon as it connects to WhatsApp, so the phone screen can turn off without disconnecting the session. This requires the Termux:API app to be installed; if it is missing, the bot still runs normally, just without the wake lock.
+
+The wake lock is released automatically when you disconnect from the control menu (option `0`).
+
+To keep the bot running even after closing the Termux session, start it detached from the terminal:
+
+```bash
+nohup npm start > amd.log 2>&1 &
+```
+
+Note: the login menu and control menu need direct terminal input, so complete the first-time login normally before switching to detached mode.
+
+### View live logs
+
+```bash
+tail -f amd.log
+```
+
+Press `Ctrl + C` to stop watching the log file. This does not stop the bot.
+
+### Stop the background bot
+
+```bash
+pkill -f "node src/bot.js"
 ```
 
 ---
