@@ -131,9 +131,8 @@ function renderMainMenu() {
   );
 }
 
-function printStatus() {
-  console.log('');
-  printBox(
+function renderStatus() {
+  return box(
     [
       bold(c('Bot Status', 'green')),
       '__DIVIDER__',
@@ -145,37 +144,55 @@ function printStatus() {
   );
 }
 
-function printLogs() {
+function renderLogs() {
   const logs = getLogs();
-  console.log('');
   if (logs.length === 0) {
-    printBox([bold(c('Download Logs', 'blue')), '__DIVIDER__', dim('No downloads yet.')], 'blue');
-    return;
+    return box([bold(c('Download Logs', 'blue')), '__DIVIDER__', dim('No downloads yet.')], 'blue');
   }
   const lines = [bold(c('Download Logs', 'blue')), '__DIVIDER__'];
   logs.slice(0, 15).forEach((entry, i) => {
     lines.push(`${i + 1}. [${entry.time}] ${entry.platform} - ${entry.status}`);
   });
-  printBox(lines, 'blue');
+  return box(lines, 'blue');
 }
 
 async function runMenuLoop() {
   if (menuActive) return;
   menuActive = true;
 
+  let lastResult = null;
+
   while (true) {
+    clearScreen();
+    console.log('');
+    printBox(
+      [
+        bold(c('Connected Successfully', 'green')),
+        '__DIVIDER__',
+        `Account  ${currentSock?.user?.id || 'Unknown'}`,
+      ],
+      'green'
+    );
     console.log('');
     console.log(renderMainMenu());
+
+    if (lastResult) {
+      console.log('');
+      console.log(lastResult);
+    }
+
     const choice = (await ask('\n' + c('  Select an option: ', 'green'))).trim();
+    lastResult = null;
 
     if (choice === '1') {
-      printStatus();
+      lastResult = renderStatus();
     } else if (choice === '2') {
-      printLogs();
+      lastResult = renderLogs();
     } else if (choice === '3') {
       clearLogs();
-      console.log(c('  Logs cleared.', 'yellow'));
+      lastResult = c('  Logs cleared.', 'yellow');
     } else if (choice === '4') {
+      clearScreen();
       console.log(c('  Reconnecting bot...', 'yellow'));
       menuActive = false;
       if (currentSock) {
@@ -185,6 +202,7 @@ async function runMenuLoop() {
       }
       return;
     } else if (choice === '0') {
+      clearScreen();
       console.log(c('  Disconnecting...', 'red'));
       if (currentSock) {
         try {
@@ -195,7 +213,7 @@ async function runMenuLoop() {
       console.log(c('  Bot disconnected. Goodbye.', 'red'));
       process.exit(0);
     } else {
-      console.log(c('  Invalid option. Choose 0-4.', 'red'));
+      lastResult = c('  Invalid option. Choose 0-4.', 'red');
     }
   }
 }
@@ -238,16 +256,6 @@ async function startBot() {
       if (connectedThisSession) return;
       connectedThisSession = true;
       await spinner('Establishing secure connection', 600);
-      clearScreen();
-      console.log('');
-      printBox(
-        [
-          bold(c('Connected Successfully', 'green')),
-          '__DIVIDER__',
-          `Account  ${sock.user?.id || 'Unknown'}`,
-        ],
-        'green'
-      );
       enableWakeLock();
       runMenuLoop();
     } else if (connection === 'close') {
